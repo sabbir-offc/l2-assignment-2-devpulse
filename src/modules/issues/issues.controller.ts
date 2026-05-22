@@ -39,7 +39,69 @@ const getAllIssues = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+const getSingleIssue = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const result = await issuesService.getSingleIssueFromDB(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(StatusCodes.NOT_FOUND).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const updateIssue = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    const result = await issuesService.updateIssueIntoDB(
+      id,
+      req.body,
+      userId,
+      userRole,
+    );
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Issue updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    // figure out what status code to send based on error message
+    if (error.message === "Issue not found") {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: error.message,
+      });
+    } else if (
+      error.message === "You can only update your own issues" ||
+      error.message === "You can only edit issues that are still open"
+    ) {
+      res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+};
+
 export const issuesController = {
   createIssue,
   getAllIssues,
+  getSingleIssue,
+  updateIssue,
 };

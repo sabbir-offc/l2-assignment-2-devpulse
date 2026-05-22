@@ -1,5 +1,5 @@
 import { pool } from "../../db";
-import { CreateIssueBody } from "./issues.interface";
+import { CreateIssueBody, UpdateIssueBody } from "./issues.interface";
 
 const createIssueService = async (
   body: CreateIssueBody,
@@ -87,7 +87,112 @@ const getAllIssuesFromDB = async (
 
   return issuesWithReporter;
 };
+const getSingleIssueFromDB = async (id: number) => {
+  const issueResult = await pool.query("SELECT * FROM issues WHERE id = $1", [
+    id,
+  ]);
+
+  if (issueResult.rows.length === 0) {
+    throw new Error("Issue not found");
+  }
+
+  const issue = issueResult.rows[0];
+
+  // get reporter separately - no joins
+  const userResult = await pool.query(
+    "SELECT id, name, role FROM users WHERE id = $1",
+    [issue.reporter_id],
+  );
+
+  const { reporter_id, ...rest } = issue;
+
+  return {
+    ...rest,
+    reporter: userResult.rows[0] || null,
+  };
+};
+
+const updateIssueIntoDB = async (
+  id: number,
+  body: UpdateIssueBody,
+  userId: number,
+  userRole: string,
+) => {
+  // first check if issue exists
+  const issueResult = await pool.query("SELECT * FROM issues WHERE id = $1", [
+    id,
+  ]);
+
+  if (issueResult.rows.length === 0) {
+    throw new Error("Issue not found");
+  }
+
+  const issue = issueResult.rows[0];
+
+  // check permissions
+  if (userRole === "contributor") {
+    if (issue.reporter_id !== userId) {
+      throw new Error("You can only update your own issues");
+    }
+
+    if (issue.status !== "open") {
+      throw new Error("You can only edit issues that are still open");
+    }
+  }
+
+  // validate fields if provided
+  if (body.title && body.title.length > 150) {
+    throw new Error("Title must be 150 characters or less");
+  }
+
+  if (body.description && body.description.length < 20) {
+    throw new Error("Description must be at least 20 characters");
+  }
+
+  if (body.type && body.type !== "bug" && body.type !== "feature_request") {
+    throw new Error("Type must be bug or feature_request");
+  }
+
+  // build update query with only provided fields
+  const fields: string[] = [];
+  const values: any[] = [];
+  let count = 1;
+
+  if (body.title) {
+    fields.push(`title = $${count}`);
+    values.push(body.title);
+    count++;
+  }
+
+  if (body.description) {
+    fields.push(`description = $${count}`);
+    values.push(body.description);
+    count++;
+  }
+
+  if (body.type) {
+    fields.push(`type = $${count}`);
+    values.push(body.type);
+    count++;
+  }
+
+  if (fields.length === 0) {
+    throw new Error("Nothing to update");
+  }
+
+  fields.push(`updated_at = NOW()`);
+  values.push(id);
+
+  const result = await pool.query(
+    `UPDATE issues SET ${fields.join(", ")} WHERE id = $${count} RETURNING *`,
+    values,
+  );
+
+  return result.rows[0];
+};
 export const issuesService = {
   createIssueService,
   getAllIssuesFromDB,
+  getSingleIssueFromDB,
+  updateIssueIntoDB,
 };
