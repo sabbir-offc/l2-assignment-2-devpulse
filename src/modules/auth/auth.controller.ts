@@ -19,6 +19,24 @@ const signup = async (req: Request, res: Response) => {
   }
 };
 
+const login = async (req: Request, res: Response) => {
+  try {
+    const result = await authService.loginUserFromDB(req.body);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Login successful",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const authController = {
   signup,
+  login,
 };
