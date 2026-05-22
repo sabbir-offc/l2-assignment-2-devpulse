@@ -24,7 +24,6 @@ A simple issue tracker backend built with Node.js, Express and PostgreSQL.
 
 1. Clone the repo
 2. Run `npm install`
-3. Copy `.env.example` to `.env` and fill in the values
 4. Run `npm run dev`
 
 ## Environment Variables
