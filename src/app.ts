@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { authRoute } from "./modules/auth/auth.route";
 
 const app = express();
 
@@ -12,5 +13,6 @@ app.get("/", (req, res) => {
     message: "devpulse server is running!",
   });
 });
+app.use("/api/auth", authRoute);
 
 export default app;
