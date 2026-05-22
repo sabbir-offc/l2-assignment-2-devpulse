@@ -10,5 +10,6 @@ router.get("/", issuesController.getAllIssues);
 router.get("/:id", issuesController.getSingleIssue);
 
 router.patch("/:id", verifyToken, issuesController.updateIssue);
+router.delete("/:id", verifyToken, issuesController.deleteIssue);
 
 export const issuesRoute = router;

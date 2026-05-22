@@ -98,10 +98,35 @@ const updateIssue = async (req: AuthRequest, res: Response) => {
     }
   }
 };
+const deleteIssue = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const userRole = req.user!.role;
 
+    await issuesService.deleteIssueFromDB(id, userRole);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Issue deleted successfully",
+    });
+  } catch (error: any) {
+    if (error.message === "Only maintainers can delete issues") {
+      res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+};
 export const issuesController = {
   createIssue,
   getAllIssues,
   getSingleIssue,
   updateIssue,
+  deleteIssue,
 };
