@@ -3,3 +3,4 @@ export interface CreateIssueBody {
   description: string;
   type: string;
 }
+ 
