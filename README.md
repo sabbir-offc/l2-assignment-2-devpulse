@@ -2,6 +2,8 @@
 
 A simple issue tracker backend built with Node.js, Express and PostgreSQL.
 
+**Live URL:** https://devpulse-gamma-nine.vercel.app
+
 ## Features
 
 - User registration and login with JWT
